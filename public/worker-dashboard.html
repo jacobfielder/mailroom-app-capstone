@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNA Package Tracker - Worker Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <header class="dashboard-header">
+            <div class="header-content">
+                <h1>UNA Package Tracker</h1>
+                <div class="header-actions">
+                    <span id="workerName" class="user-name"></span>
+                    <button onclick="logout()" class="btn btn-secondary">Logout</button>
+                </div>
+            </div>
+        </header>
+        
+        <div class="dashboard-container">
+            <nav class="sidebar">
+                <button class="nav-btn active" onclick="showSection('packages')">
+                    <span class="icon">📦</span> Packages
+                </button>
+                <button class="nav-btn" onclick="showSection('recipients')">
+                    <span class="icon">👥</span> Recipients
+                </button>
+                <button class="nav-btn" onclick="showSection('scan')">
+                    <span class="icon">📷</span> Scan Package
+                </button>
+            </nav>
+            
+            <main class="main-content">
+                <!-- Packages Section -->
+                <section id="packagesSection" class="content-section active">
+                    <div class="section-header">
+                        <h2>Package Management</h2>
+                        <div class="search-bar">
+                            <input 
+                                type="text" 
+                                id="packageSearch" 
+                                placeholder="Search by name, ID, or tracking..."
+                                oninput="filterPackages()"
+                            >
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Check-in Date</th>
+                                    <th>Student/Staff Name</th>
+                                    <th>L Number</th>
+                                    <th>Tracking Code</th>
+                                    <th>Mailbox #</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="packagesTableBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                
+                <!-- Recipients Section -->
+                <section id="recipientsSection" class="content-section">
+                    <div class="section-header">
+                        <h2>Recipient Management</h2>
+                        <button class="btn btn-primary" onclick="showAddRecipientModal()">
+                            + Add Recipient
+                        </button>
+                    </div>
+                    
+                    <div class="search-bar">
+                        <input 
+                            type="text" 
+                            id="recipientSearch" 
+                            placeholder="Search recipients..."
+                            oninput="filterRecipients()"
+                        >
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>L Number</th>
+                                    <th>Type</th>
+                                    <th>Mailbox #</th>
+                                    <th>Email</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recipientsTableBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                
+                <!-- Scan Package Section -->
+                <section id="scanSection" class="content-section">
+                    <div class="section-header">
+                        <h2>Scan Package</h2>
+                    </div>
+                    
+                    <div class="scan-container">
+                        <div class="scan-card">
+                            <h3>Barcode Scanner</h3>
+                            <p class="scan-instructions">Use your barcode scanner or enter tracking code manually</p>
+                            
+                            <form id="scanForm" onsubmit="scanPackage(event)">
+                                <div class="form-group">
+                                    <label for="trackingCode">Tracking Code</label>
+                                    <input 
+                                        type="text" 
+                                        id="trackingCode" 
+                                        placeholder="Scan or enter tracking code"
+                                        required
+                                        autofocus
+                                    >
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="recipientSelect">Recipient</label>
+                                    <select id="recipientSelect" required>
+                                        <option value="">Select recipient</option>
+                                    </select>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary btn-large">
+                                    Check In Package
+                                </button>
+                            </form>
+                            
+                            <div id="scanMessage" class="scan-message"></div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Add Recipient Modal -->
+    <div id="addRecipientModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Recipient</h3>
+                <button class="close-btn" onclick="closeAddRecipientModal()">&times;</button>
+            </div>
+            <form id="addRecipientForm" onsubmit="addRecipient(event)">
+                <div class="form-group">
+                    <label for="recipientName">Full Name</label>
+                    <input type="text" id="recipientName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="recipientLNumber">L Number</label>
+                    <input type="text" id="recipientLNumber" placeholder="L12345" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="recipientType">Type</label>
+                    <select id="recipientType" required>
+                        <option value="Student">Student</option>
+                        <option value="Staff">Staff</option>
+                        <option value="Faculty">Faculty</option>
+                        <option value="Department">Department</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="recipientMailbox">Mailbox Number</label>
+                    <input type="text" id="recipientMailbox" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="recipientEmail">Email</label>
+                    <input type="email" id="recipientEmail" required>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddRecipientModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Recipient</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Add API client before worker.js -->
+    <script src="api-client.js"></script>
+    <script src="worker.js"></script>
+</body>
+</html>

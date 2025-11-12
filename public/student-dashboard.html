@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNA Package Tracker - My Packages</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <header class="dashboard-header">
+            <div class="header-content">
+                <h1>UNA Package Tracker</h1>
+                <div class="header-actions">
+                    <span id="studentName" class="user-name"></span>
+                    <button onclick="logout()" class="btn btn-secondary">Logout</button>
+                </div>
+            </div>
+        </header>
+        
+        <div class="student-container">
+            <div class="welcome-section">
+                <h2>My Packages</h2>
+                <p class="welcome-text">View your packages ready for pickup</p>
+            </div>
+            
+            <div class="search-section">
+                <input 
+                    type="text" 
+                    id="studentSearch" 
+                    placeholder="Search by tracking code..."
+                    oninput="filterStudentPackages()"
+                >
+            </div>
+            
+            <div id="packagesContainer" class="packages-grid">
+                <!-- Populated by JavaScript -->
+            </div>
+            
+            <div id="noPackagesMessage" class="no-packages">
+                <span class="icon-large">📭</span>
+                <h3>No Packages Available</h3>
+                <p>You don't have any packages ready for pickup at this time.</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="api-client.js"></script>
+    <script src="student.js"></script>
+</body>
+</html>
