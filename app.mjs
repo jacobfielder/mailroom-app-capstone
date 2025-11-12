@@ -1,7 +1,7 @@
 import express from 'express';
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
-import bcrypt from 'bcrypt';
+import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import cors from 'cors';
 import nodemailer from 'nodemailer';
@@ -91,7 +91,7 @@ async function initializeDatabase() {
 
 async function seedDatabase() {
   // Create demo worker account
-  const hashedPassword = await bcrypt.hash('password', 10);
+  const hashedPassword = await bcryptjs.hash('password', 10);
   
   await db.run(`
     INSERT INTO users (username, password, email, type)
@@ -182,7 +182,7 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const validPassword = await bcrypt.compare(password, user.password);
+    const validPassword = await bcryptjs.compare(password, user.password);
     if (!validPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
