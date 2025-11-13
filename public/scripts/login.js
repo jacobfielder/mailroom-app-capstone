@@ -9,13 +9,16 @@ document.addEventListener("DOMContentLoaded", () => {
   // Declare apiClient variable
   const apiClient = window.apiClient
 
-  window.switchTab = (tabName, event) => {
+  window.switchTab = (tabName) => {
     // Remove active class from all tabs and forms
     document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"))
     document.querySelectorAll(".login-form").forEach((form) => form.classList.remove("active"))
 
-    // Add active class to selected tab
-    event.target.classList.add("active")
+    // Add active class to the clicked tab
+    const activeTabBtn = document.querySelector(`.tab-btn[onclick*="${tabName}"]`)
+    if (activeTabBtn) {
+      activeTabBtn.classList.add("active")
+    }
 
     // Show corresponding form
     if (tabName === "student") {
@@ -25,7 +28,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Clear error message
-    document.getElementById("errorMessage").classList.remove("show")
+    const errorMessage = document.getElementById("errorMessage")
+    if (errorMessage) {
+      errorMessage.classList.remove("show")
+    }
   }
 
   const studentForm = document.getElementById("studentLoginForm")
