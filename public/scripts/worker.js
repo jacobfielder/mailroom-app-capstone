@@ -1,7 +1,6 @@
 // Worker Dashboard functionality
 let packages = []
 let recipients = []
-const apiClient = {} // Declare apiClient variable
 
 document.addEventListener("DOMContentLoaded", async () => {
   const token = localStorage.getItem("authToken")
@@ -14,14 +13,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("workerName").textContent = currentUser.username
 
-  await window.loadPackages() // Use window.loadPackages
-  await window.loadRecipients() // Use window.loadRecipients
+  await window.loadPackages()
+  await window.loadRecipients()
   populateRecipientSelect()
 })
 
 window.loadPackages = async () => {
   try {
-    packages = await apiClient.getPackages()
+    packages = await window.apiClient.getPackages()
     displayPackages(packages)
   } catch (error) {
     console.error("Error loading packages:", error)
@@ -31,7 +30,7 @@ window.loadPackages = async () => {
 
 window.loadRecipients = async () => {
   try {
-    recipients = await apiClient.getRecipients()
+    recipients = await window.apiClient.getRecipients()
     displayRecipients(recipients)
   } catch (error) {
     console.error("Error loading recipients:", error)
@@ -165,7 +164,7 @@ window.scanPackage = async (event) => {
   }
 
   try {
-    const newPackage = await apiClient.checkInPackage(trackingCode, recipientId)
+    const newPackage = await window.apiClient.checkInPackage(trackingCode, recipientId)
     const recipient = recipients.find((r) => r.id == recipientId)
 
     showScanMessage(`Package checked in for ${recipient.name}!`, "success")
@@ -173,7 +172,7 @@ window.scanPackage = async (event) => {
     document.getElementById("trackingCode").value = ""
     recipientSelect.value = ""
 
-    await window.loadPackages() // Use window.loadPackages
+    await window.loadPackages()
 
     document.getElementById("trackingCode").focus()
   } catch (error) {
@@ -193,8 +192,8 @@ function showScanMessage(message, type) {
 
 window.checkoutPackage = async (packageId) => {
   try {
-    await apiClient.checkOutPackage(packageId)
-    await window.loadPackages() // Use window.loadPackages
+    await window.apiClient.checkOutPackage(packageId)
+    await window.loadPackages()
   } catch (error) {
     showScanMessage(error.message || "Failed to check out package", "error")
   }
@@ -203,8 +202,8 @@ window.checkoutPackage = async (packageId) => {
 window.deletePackage = async (packageId) => {
   if (confirm("Are you sure you want to delete this package?")) {
     try {
-      await apiClient.deletePackage(packageId)
-      await window.loadPackages() // Use window.loadPackages
+      await window.apiClient.deletePackage(packageId)
+      await window.loadPackages()
     } catch (error) {
       showScanMessage(error.message || "Failed to delete package", "error")
     }
@@ -249,7 +248,7 @@ window.printSlip = (packageId) => {
 
 window.emailRecipient = async (packageId) => {
   try {
-    await apiClient.sendNotification(packageId)
+    await window.apiClient.sendNotification(packageId)
     const pkg = packages.find((p) => p.id === packageId)
     showScanMessage(`Email notification sent to ${pkg.recipient_name}`, "success")
   } catch (error) {
@@ -278,10 +277,10 @@ window.addRecipient = async (event) => {
   }
 
   try {
-    await apiClient.addRecipient(newRecipient)
-    await window.loadRecipients() // Use window.loadRecipients
+    await window.apiClient.addRecipient(newRecipient)
+    await window.loadRecipients()
     populateRecipientSelect()
-    window.closeAddRecipientModal() // Use window.closeAddRecipientModal
+    window.closeAddRecipientModal()
     showScanMessage("Recipient added successfully", "success")
   } catch (error) {
     showScanMessage(error.message || "Failed to add recipient", "error")
@@ -291,8 +290,8 @@ window.addRecipient = async (event) => {
 window.deleteRecipient = async (recipientId) => {
   if (confirm("Are you sure you want to remove this recipient?")) {
     try {
-      await apiClient.deleteRecipient(recipientId)
-      await window.loadRecipients() // Use window.loadRecipients
+      await window.apiClient.deleteRecipient(recipientId)
+      await window.loadRecipients()
       populateRecipientSelect()
       showScanMessage("Recipient removed successfully", "success")
     } catch (error) {
@@ -319,7 +318,7 @@ function formatDate(dateString) {
 }
 
 window.logout = () => {
-  apiClient.clearToken()
+  window.apiClient.clearToken()
   localStorage.removeItem("currentUser")
   localStorage.removeItem("userType")
   window.location.href = "index.html"
@@ -328,6 +327,6 @@ window.logout = () => {
 document.addEventListener("click", (event) => {
   const modal = document.getElementById("addRecipientModal")
   if (event.target === modal) {
-    window.closeAddRecipientModal() // Use window.closeAddRecipientModal
+    window.closeAddRecipientModal()
   }
 })

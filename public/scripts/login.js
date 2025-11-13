@@ -6,9 +6,6 @@ document.addEventListener("DOMContentLoaded", () => {
     redirectToDashboard(userType)
   }
 
-  // Declare apiClient variable
-  const apiClient = window.apiClient
-
   window.switchTab = (tabName) => {
     // Remove active class from all tabs and forms
     document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"))
@@ -47,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      const data = await apiClient.login(studentId, password, "student")
+      const data = await window.apiClient.login(studentId, password, "student")
       localStorage.setItem("userType", "student")
       localStorage.setItem("currentUser", JSON.stringify(data.user))
       redirectToDashboard("student")
@@ -69,7 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      const data = await apiClient.login(email, password, "worker")
+      const data = await window.apiClient.login(email, password, "worker")
       localStorage.setItem("userType", "worker")
       localStorage.setItem("currentUser", JSON.stringify(data.user))
       redirectToDashboard("worker")

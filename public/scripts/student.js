@@ -1,6 +1,5 @@
 // Student Dashboard functionality
 let userPackages = []
-let apiClient // Declare apiClient variable
 
 document.addEventListener("DOMContentLoaded", async () => {
   const token = localStorage.getItem("authToken")
@@ -18,7 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 async function loadUserPackages() {
   try {
-    userPackages = await apiClient.getMyPackages()
+    userPackages = await window.apiClient.getMyPackages()
     displayUserPackages(userPackages)
   } catch (error) {
     console.error("Error loading packages:", error)
@@ -92,7 +91,7 @@ function formatDate(dateString) {
 }
 
 window.logout = () => {
-  apiClient.clearToken()
+  window.apiClient.clearToken()
   localStorage.removeItem("currentUser")
   localStorage.removeItem("userType")
   window.location.href = "index.html"
