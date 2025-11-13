@@ -1,95 +1,69 @@
 // Login functionality
 document.addEventListener("DOMContentLoaded", () => {
-  const token = localStorage.getItem("authToken")
-  const userType = localStorage.getItem("userType")
-  if (token && userType) {
-    redirectToDashboard(userType)
-  }
+	const token = localStorage.getItem("authToken")
+	const userType = localStorage.getItem("userType")
+	if (token && userType) {
+		redirectToDashboard(userType)
+		return
+	}
 
-  window.switchTab = (tabName) => {
-    // Remove active class from all tabs and forms
-    document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"))
-    document.querySelectorAll(".login-form").forEach((form) => form.classList.remove("active"))
+	// Tabs: use data attributes + listeners, no globals
+	const tabButtons = document.querySelectorAll(".tab-btn")
+	const setActiveTab = (tabName) => {
+		document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"))
+		document.querySelectorAll(".login-form").forEach((form) => form.classList.remove("active"))
+		const btn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`)
+		const formId = tabName === "student" ? "studentLoginForm" : "workerLoginForm"
+		if (btn) btn.classList.add("active")
+		document.getElementById(formId)?.classList.add("active")
+		document.getElementById("errorMessage")?.classList.remove("show")
+	}
+	tabButtons.forEach((btn) => {
+		btn.addEventListener("click", () => setActiveTab(btn.dataset.tab))
+	})
 
-    // Add active class to the clicked tab
-    const activeTabBtn = document.querySelector(`.tab-btn[onclick*="${tabName}"]`)
-    if (activeTabBtn) {
-      activeTabBtn.classList.add("active")
-    }
+	// Consolidated form handling for student and worker
+	const loginConfig = {
+		student: {
+			form: "#studentLoginForm",
+			userField: "#studentId",
+			passField: "#studentPassword",
+		},
+		worker: {
+			form: "#workerLoginForm",
+			userField: "#workerEmail",
+			passField: "#workerPassword",
+		},
+	}
 
-    // Show corresponding form
-    if (tabName === "student") {
-      document.getElementById("studentLoginForm").classList.add("active")
-    } else {
-      document.getElementById("workerLoginForm").classList.add("active")
-    }
+// Allow any credentials to log in (dev bypass)
+Object.entries(loginConfig).forEach(([type, cfg]) => {
+	const form = document.querySelector(cfg.form)
+	if (!form) return
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault()
+		const username = document.querySelector(cfg.userField)?.value?.trim() || ""
+		const password = document.querySelector(cfg.passField)?.value || ""
+		// Bypass authentication: accept any credentials
+		localStorage.setItem("authToken", "dev-allow-all")
+		localStorage.setItem("userType", type)
+		localStorage.setItem(
+			"currentUser",
+			JSON.stringify({ type, username, email: username, devBypass: true })
+		)
+		redirectToDashboard(type)
+	})
+})
 
-    // Clear error message
-    const errorMessage = document.getElementById("errorMessage")
-    if (errorMessage) {
-      errorMessage.classList.remove("show")
-    }
-  }
+	function redirectToDashboard(userType) {
+		window.location.href = userType === "worker" ? "worker-dashboard.html" : "student-dashboard.html"
+	}
 
-  const studentForm = document.getElementById("studentLoginForm")
-  studentForm.addEventListener("submit", async (e) => {
-    e.preventDefault()
-
-    const studentId = document.getElementById("studentId").value
-    const password = document.getElementById("studentPassword").value
-
-    if (!studentId || !password) {
-      showError("Please fill in all fields")
-      return
-    }
-
-    try {
-      const data = await window.apiClient.login(studentId, password, "student")
-      localStorage.setItem("userType", "student")
-      localStorage.setItem("currentUser", JSON.stringify(data.user))
-      redirectToDashboard("student")
-    } catch (error) {
-      showError(error.message || "Invalid credentials")
-    }
-  })
-
-  const workerForm = document.getElementById("workerLoginForm")
-  workerForm.addEventListener("submit", async (e) => {
-    e.preventDefault()
-
-    const email = document.getElementById("workerEmail").value
-    const password = document.getElementById("workerPassword").value
-
-    if (!email || !password) {
-      showError("Please fill in all fields")
-      return
-    }
-
-    try {
-      const data = await window.apiClient.login(email, password, "worker")
-      localStorage.setItem("userType", "worker")
-      localStorage.setItem("currentUser", JSON.stringify(data.user))
-      redirectToDashboard("worker")
-    } catch (error) {
-      showError(error.message || "Invalid credentials")
-    }
-  })
-
-  function redirectToDashboard(userType) {
-    if (userType === "worker") {
-      window.location.href = "worker-dashboard.html"
-    } else {
-      window.location.href = "student-dashboard.html"
-    }
-  }
-
-  function showError(message) {
-    const errorMessage = document.getElementById("errorMessage")
-    errorMessage.textContent = message
-    errorMessage.classList.add("show")
-
-    setTimeout(() => {
-      errorMessage.classList.remove("show")
-    }, 4000)
-  }
+	function showError(message) {
+		const el = document.getElementById("errorMessage")
+		if (!el) return
+		el.textContent = message
+		el.classList.add("show")
+		setTimeout(() => el.classList.remove("show"), 4000)
+	}
 })
