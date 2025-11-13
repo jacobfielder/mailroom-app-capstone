@@ -7,10 +7,6 @@
 .env.production
 .env.*.local
 
-# SQLite database
-*.db
-*.sqlite
-*.sqlite3
 
 # logs
 logs
@@ -42,3 +38,4 @@ temp/
 
 # vercel
 .vercel
+
