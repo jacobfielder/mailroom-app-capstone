@@ -1,77 +1,7 @@
 // Worker Dashboard functionality
 let packages = []
 let recipients = []
-
-const apiClient = {
-  getPackages: async () => {
-    // Mock implementation for demonstration purposes
-    return [
-      {
-        id: 1,
-        check_in_date: "2023-10-01",
-        recipient_name: "John Doe",
-        l_number: "L12345",
-        tracking_code: "TC12345",
-        mailbox: "MB1",
-        status: "Checked In",
-      },
-      {
-        id: 2,
-        check_in_date: "2023-10-02",
-        recipient_name: "Jane Smith",
-        l_number: "L67890",
-        tracking_code: "TC67890",
-        mailbox: "MB2",
-        status: "Picked Up",
-      },
-    ]
-  },
-  getRecipients: async () => {
-    // Mock implementation for demonstration purposes
-    return [
-      { id: 1, name: "John Doe", l_number: "L12345", type: "Student", mailbox: "MB1", email: "john.doe@example.com" },
-      {
-        id: 2,
-        name: "Jane Smith",
-        l_number: "L67890",
-        type: "Faculty",
-        mailbox: "MB2",
-        email: "jane.smith@example.com",
-      },
-    ]
-  },
-  checkInPackage: async (trackingCode, recipientId) => {
-    // Mock implementation for demonstration purposes
-    return {
-      id: 3,
-      check_in_date: new Date().toISOString(),
-      recipient_name: "New Recipient",
-      l_number: "L54321",
-      tracking_code: trackingCode,
-      mailbox: "MB3",
-      status: "Checked In",
-    }
-  },
-  checkOutPackage: async (packageId) => {
-    // Mock implementation for demonstration purposes
-    packages = packages.map((pkg) => (pkg.id === packageId ? { ...pkg, status: "Picked Up" } : pkg))
-  },
-  deletePackage: async (packageId) => {
-    // Mock implementation for demonstration purposes
-    packages = packages.filter((pkg) => pkg.id !== packageId)
-  },
-  addRecipient: async (newRecipient) => {
-    // Mock implementation for demonstration purposes
-    recipients.push({ id: recipients.length + 1, ...newRecipient })
-  },
-  deleteRecipient: async (recipientId) => {
-    // Mock implementation for demonstration purposes
-    recipients = recipients.filter((recipient) => recipient.id !== recipientId)
-  },
-  clearToken: () => {
-    // Mock implementation for demonstration purposes
-  },
-}
+const apiClient = {} // Declare apiClient variable
 
 document.addEventListener("DOMContentLoaded", async () => {
   const token = localStorage.getItem("authToken")
@@ -84,12 +14,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("workerName").textContent = currentUser.username
 
-  await loadPackages()
-  await loadRecipients()
+  await window.loadPackages() // Use window.loadPackages
+  await window.loadRecipients() // Use window.loadRecipients
   populateRecipientSelect()
 })
 
-async function loadPackages() {
+window.loadPackages = async () => {
   try {
     packages = await apiClient.getPackages()
     displayPackages(packages)
@@ -99,7 +29,7 @@ async function loadPackages() {
   }
 }
 
-async function loadRecipients() {
+window.loadRecipients = async () => {
   try {
     recipients = await apiClient.getRecipients()
     displayRecipients(recipients)
@@ -172,7 +102,7 @@ function displayRecipients(recipientsToDisplay) {
   })
 }
 
-function filterPackages() {
+window.filterPackages = () => {
   const searchTerm = document.getElementById("packageSearch").value.toLowerCase()
   const filtered = packages.filter(
     (pkg) =>
@@ -183,7 +113,7 @@ function filterPackages() {
   displayPackages(filtered)
 }
 
-function filterRecipients() {
+window.filterRecipients = () => {
   const searchTerm = document.getElementById("recipientSearch").value.toLowerCase()
   const filtered = recipients.filter(
     (recipient) =>
@@ -194,7 +124,7 @@ function filterRecipients() {
   displayRecipients(filtered)
 }
 
-function showSection(sectionName) {
+window.showSection = (sectionName, event) => {
   // Hide all sections
   document.querySelectorAll(".content-section").forEach((section) => {
     section.classList.remove("active")
@@ -212,7 +142,7 @@ function showSection(sectionName) {
   event.target.closest(".nav-btn").classList.add("active")
 }
 
-async function scanPackage(event) {
+window.scanPackage = async (event) => {
   event.preventDefault()
 
   const trackingCode = document.getElementById("trackingCode").value
@@ -233,7 +163,7 @@ async function scanPackage(event) {
     document.getElementById("trackingCode").value = ""
     recipientSelect.value = ""
 
-    await loadPackages()
+    await window.loadPackages() // Use window.loadPackages
 
     document.getElementById("trackingCode").focus()
   } catch (error) {
@@ -251,27 +181,27 @@ function showScanMessage(message, type) {
   }, 3000)
 }
 
-async function checkoutPackage(packageId) {
+window.checkoutPackage = async (packageId) => {
   try {
     await apiClient.checkOutPackage(packageId)
-    await loadPackages()
+    await window.loadPackages() // Use window.loadPackages
   } catch (error) {
     showScanMessage(error.message || "Failed to check out package", "error")
   }
 }
 
-async function deletePackage(packageId) {
+window.deletePackage = async (packageId) => {
   if (confirm("Are you sure you want to delete this package?")) {
     try {
       await apiClient.deletePackage(packageId)
-      await loadPackages()
+      await window.loadPackages() // Use window.loadPackages
     } catch (error) {
       showScanMessage(error.message || "Failed to delete package", "error")
     }
   }
 }
 
-function printSlip(packageId) {
+window.printSlip = (packageId) => {
   const pkg = packages.find((p) => p.id === packageId)
   if (!pkg) return
 
@@ -307,26 +237,26 @@ function printSlip(packageId) {
   printWindow.print()
 }
 
-async function emailRecipient(packageId) {
+window.emailRecipient = async (packageId) => {
   try {
     await apiClient.sendNotification(packageId)
     const pkg = packages.find((p) => p.id === packageId)
-    showScanMessage(`Email notification sent to ${pkg.email}`, "success")
+    showScanMessage(`Email notification sent to ${pkg.recipient_name}`, "success")
   } catch (error) {
     showScanMessage(error.message || "Failed to send email", "error")
   }
 }
 
-function showAddRecipientModal() {
+window.showAddRecipientModal = () => {
   document.getElementById("addRecipientModal").classList.add("show")
 }
 
-function closeAddRecipientModal() {
+window.closeAddRecipientModal = () => {
   document.getElementById("addRecipientModal").classList.remove("show")
   document.getElementById("addRecipientForm").reset()
 }
 
-async function addRecipient(event) {
+window.addRecipient = async (event) => {
   event.preventDefault()
 
   const newRecipient = {
@@ -339,20 +269,20 @@ async function addRecipient(event) {
 
   try {
     await apiClient.addRecipient(newRecipient)
-    await loadRecipients()
+    await window.loadRecipients() // Use window.loadRecipients
     populateRecipientSelect()
-    closeAddRecipientModal()
+    window.closeAddRecipientModal() // Use window.closeAddRecipientModal
     showScanMessage("Recipient added successfully", "success")
   } catch (error) {
     showScanMessage(error.message || "Failed to add recipient", "error")
   }
 }
 
-async function deleteRecipient(recipientId) {
+window.deleteRecipient = async (recipientId) => {
   if (confirm("Are you sure you want to remove this recipient?")) {
     try {
       await apiClient.deleteRecipient(recipientId)
-      await loadRecipients()
+      await window.loadRecipients() // Use window.loadRecipients
       populateRecipientSelect()
       showScanMessage("Recipient removed successfully", "success")
     } catch (error) {
@@ -378,7 +308,7 @@ function formatDate(dateString) {
   return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
 }
 
-function logout() {
+window.logout = () => {
   apiClient.clearToken()
   localStorage.removeItem("currentUser")
   localStorage.removeItem("userType")
@@ -388,6 +318,6 @@ function logout() {
 document.addEventListener("click", (event) => {
   const modal = document.getElementById("addRecipientModal")
   if (event.target === modal) {
-    closeAddRecipientModal()
+    window.closeAddRecipientModal() // Use window.closeAddRecipientModal
   }
 })

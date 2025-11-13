@@ -76,7 +76,7 @@ function displayUserPackages(packagesToDisplay) {
   })
 }
 
-function filterStudentPackages() {
+window.filterStudentPackages = () => {
   const searchTerm = document.getElementById("studentSearch").value.toLowerCase()
   const filtered = userPackages.filter((pkg) => pkg.tracking_code.toLowerCase().includes(searchTerm))
   displayUserPackages(filtered)
@@ -91,7 +91,7 @@ function formatDate(dateString) {
   })
 }
 
-function logout() {
+window.logout = () => {
   apiClient.clearToken()
   localStorage.removeItem("currentUser")
   localStorage.removeItem("userType")

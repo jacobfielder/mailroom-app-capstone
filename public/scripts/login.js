@@ -1,29 +1,15 @@
 // Login functionality
 document.addEventListener("DOMContentLoaded", () => {
-  const loginForm = document.getElementById("loginForm")
-  const errorMessage = document.getElementById("errorMessage")
-
   const token = localStorage.getItem("authToken")
   const userType = localStorage.getItem("userType")
   if (token && userType) {
     redirectToDashboard(userType)
   }
 
-  const apiClient = {
-    // Declare the apiClient variable here
-    login: async (credentials, password, userType) => {
-      // Mock implementation for demonstration purposes
-      return new Promise((resolve, reject) => {
-        if (credentials === "valid" && password === "valid") {
-          resolve({ user: { id: credentials, type: userType } })
-        } else {
-          reject(new Error("Invalid credentials"))
-        }
-      })
-    },
-  }
+  // Declare apiClient variable
+  const apiClient = window.apiClient
 
-  function switchTab(tabName) {
+  window.switchTab = (tabName, event) => {
     // Remove active class from all tabs and forms
     document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"))
     document.querySelectorAll(".login-form").forEach((form) => form.classList.remove("active"))
@@ -95,6 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function showError(message) {
+    const errorMessage = document.getElementById("errorMessage")
     errorMessage.textContent = message
     errorMessage.classList.add("show")
 
