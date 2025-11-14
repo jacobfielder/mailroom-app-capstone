@@ -1,0 +1,40 @@
+{
+  "name": "una-package-tracker",
+  "version": "1.0.0",
+  "description": "University of North Alabama Package Tracking System",
+  "type": "module",
+  "main": "app.mjs",
+  "scripts": {
+    "dev": "node app.mjs",
+    "start": "node app.mjs",
+    "build": "echo 'No build step required'"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "cors": "^2.8.5",
+    "nodemailer": "^6.9.8",
+    "path": "0.12.7",
+    "url": "0.11.4",
+    "next": "16.0.2",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "lucide-react": "0.553.0",
+    "tailwind-merge": "3.4.0",
+    "tailwindcss-animate": "1.0.7"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.4",
+    "@types/react-dom": "19.2.3",
+    "@types/node": "24.10.1",
+    "tailwindcss": "4.1.17",
+    "typescript": "5.9.3",
+    "postcss": "8.5.6"
+  }
+}
