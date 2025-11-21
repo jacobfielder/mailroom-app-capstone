@@ -123,7 +123,25 @@
                         <div class="col-12 col-lg-8">
                             <div class="scan-card p-4">
                                 <h3 class="mb-3">Barcode Scanner</h3>
-                                <p class="scan-instructions text-muted mb-4">Use your barcode scanner or enter tracking code manually</p>
+                                <p class="scan-instructions mb-4">Use your device camera to scan barcode or enter manually</p>
+
+                                <!-- Camera Scanner -->
+                                <div id="reader" style="width: 100%; margin-bottom: 20px;"></div>
+
+                                <!-- Start/Stop Scanner Buttons -->
+                                <div class="mb-3">
+                                    <button id="startScanBtn" class="btn btn-primary w-100 mb-2" onclick="startScanner()">
+                                        📷 Start Camera Scanner
+                                    </button>
+                                    <button id="stopScanBtn" class="btn btn-secondary w-100 mb-2" onclick="stopScanner()" style="display: none;">
+                                        ⏹️ Stop Scanner
+                                    </button>
+                                </div>
+
+                                <!-- Manual Entry Form -->
+                                <div class="scan-divider mb-3" style="text-align: center; color: var(--text-muted);">
+                                    <span>OR ENTER MANUALLY</span>
+                                </div>
 
                                 <form id="scanForm" onsubmit="scanPackage(event)">
                                     <div class="mb-3">
@@ -134,7 +152,6 @@
                                             class="form-control"
                                             placeholder="Scan or enter tracking code"
                                             required
-                                            autofocus
                                         >
                                     </div>
 
@@ -212,8 +229,11 @@
     
     <!-- Bootstrap JavaScript Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <!-- html5-qrcode library for barcode scanning -->
+    <script src="https://unpkg.com/html5-qrcode@latest/html5-qrcode.min.js"></script>
     <!-- Add API client before worker.js -->
     <script src="scripts/api-client.js"></script>
+    <script src="scripts/barcode-scanner.js"></script>
     <script src="scripts/worker.js"></script>
 </body>
 </html>

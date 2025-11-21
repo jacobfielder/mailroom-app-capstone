@@ -463,11 +463,11 @@ body {
 .data-table th {
   padding: 16px;
   text-align: left;
-  font-weight: 600;
-  color: var(--text);
+  font-weight: 700;
+  color: #374151;
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
-  font-size: 13px;
+  font-size: 15px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -541,8 +541,8 @@ body {
 }
 
 .scan-instructions {
-  color: var(--text-muted);
-  margin-bottom: 32px;
+  color: #9ca3af;
+  margin-bottom: do32px;
   font-size: 15px;
 }
 
