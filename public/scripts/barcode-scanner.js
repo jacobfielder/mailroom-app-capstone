@@ -30,11 +30,18 @@ function startScanner() {
             // Fill the tracking code input
             document.getElementById('trackingCode').value = decodedText;
 
+            // Detect carrier from tracking number
+            const carrier = detectCarrier(decodedText);
+            console.log('Detected carrier:', carrier);
+
+            // Display carrier information
+            displayCarrierInfo(carrier, decodedText);
+
             // Stop scanner after successful scan
             stopScanner();
 
-            // Show success message
-            showScanMessage('Barcode scanned successfully!', 'success');
+            // Show success message with carrier
+            showScanMessage(`${carrier.name} package scanned successfully!`, 'success');
 
             // Optional: Auto-focus on recipient select
             document.getElementById('recipientSelect').focus();
@@ -89,5 +96,69 @@ window.addEventListener('beforeunload', () => {
 window.addEventListener('visibilitychange', () => {
     if (document.hidden && isScanning) {
         stopScanner();
+    }
+});
+
+// Display carrier information in the UI
+function displayCarrierInfo(carrier, trackingNumber) {
+    // Check if carrier info container exists, if not create it
+    let carrierInfoEl = document.getElementById('carrierInfoDisplay');
+
+    if (!carrierInfoEl) {
+        // Create carrier info element after the tracking code input
+        carrierInfoEl = document.createElement('div');
+        carrierInfoEl.id = 'carrierInfoDisplay';
+
+        const trackingInput = document.getElementById('trackingCode');
+        trackingInput.parentNode.insertAdjacentElement('afterend', carrierInfoEl);
+    }
+
+    // Build carrier info HTML
+    const logoHTML = carrier.logoUrl
+        ? `<img src="${carrier.logoUrl}" alt="${carrier.name}" class="carrier-logo-large" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+           <span class="icon" style="display:none;">${getCarrierIcon(carrier.code)}</span>`
+        : `<span class="icon">${getCarrierIcon(carrier.code)}</span>`;
+
+    const trackLinkHTML = carrier.trackUrl
+        ? `<a href="${carrier.trackUrl}" target="_blank" class="track-link">Track →</a>`
+        : '';
+
+    carrierInfoEl.innerHTML = `
+        <div class="carrier-info">
+            ${logoHTML}
+            <div class="carrier-details">
+                <div class="carrier-name">${carrier.name}</div>
+                <div class="tracking-number">${trackingNumber}</div>
+            </div>
+            ${trackLinkHTML}
+        </div>
+    `;
+}
+
+// Detect carrier when tracking code is manually entered
+document.addEventListener('DOMContentLoaded', function() {
+    const trackingInput = document.getElementById('trackingCode');
+
+    if (trackingInput) {
+        // Detect carrier on blur (when user finishes typing)
+        trackingInput.addEventListener('blur', function() {
+            const trackingNumber = this.value.trim();
+            if (trackingNumber) {
+                const carrier = detectCarrier(trackingNumber);
+                displayCarrierInfo(carrier, trackingNumber);
+            }
+        });
+
+        // Also detect on Enter key press
+        trackingInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const trackingNumber = this.value.trim();
+                if (trackingNumber) {
+                    const carrier = detectCarrier(trackingNumber);
+                    displayCarrierInfo(carrier, trackingNumber);
+                }
+            }
+        });
     }
 });

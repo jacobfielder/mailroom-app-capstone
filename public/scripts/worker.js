@@ -42,17 +42,22 @@ function displayPackages(packagesToDisplay) {
   tbody.innerHTML = ""
 
   if (packagesToDisplay.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px;">No packages found</td></tr>'
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;">No packages found</td></tr>'
     return
   }
 
   packagesToDisplay.forEach((pkg) => {
+    // Detect carrier from tracking code
+    const carrier = detectCarrier(pkg.tracking_code)
+    const carrierBadgeHTML = getCarrierBadgeHTML(carrier.name, carrier.color, carrier.logoUrl)
+
     const row = document.createElement("tr")
     row.innerHTML = `
             <td>${formatDate(pkg.check_in_date)}</td>
             <td>${pkg.recipient_name}</td>
             <td>${pkg.l_number}</td>
             <td>${pkg.tracking_code}</td>
+            <td>${carrierBadgeHTML}</td>
             <td>${pkg.mailbox}</td>
             <td><span class="status-badge status-${pkg.status.toLowerCase().replace(" ", "-")}">${pkg.status}</span></td>
             <td>
@@ -163,14 +168,26 @@ window.scanPackage = async (event) => {
     return
   }
 
+  // Detect carrier from tracking code
+  const carrier = detectCarrier(trackingCode)
+  console.log('Carrier detected for package:', carrier)
+
   try {
+    // TODO: When backend supports it, pass carrier info: { trackingCode, recipientId, carrier }
     const newPackage = await window.apiClient.checkInPackage(trackingCode, recipientId)
     const recipient = recipients.find((r) => r.id == recipientId)
 
-    showScanMessage(`Package checked in for ${recipient.name}!`, "success")
+    showScanMessage(`${carrier.name} package checked in for ${recipient.name}!`, "success")
 
+    // Clear form
     document.getElementById("trackingCode").value = ""
     recipientSelect.value = ""
+
+    // Clear carrier info display
+    const carrierInfoEl = document.getElementById('carrierInfoDisplay')
+    if (carrierInfoEl) {
+      carrierInfoEl.innerHTML = ''
+    }
 
     await window.loadPackages()
 
@@ -220,6 +237,9 @@ window.printSlip = (packageId) => {
   const pkg = packages.find((p) => p.id === packageId)
   if (!pkg) return
 
+  // Detect carrier
+  const carrier = detectCarrier(pkg.tracking_code)
+
   const printWindow = window.open("", "_blank")
   printWindow.document.write(`
         <html>
@@ -241,6 +261,7 @@ window.printSlip = (packageId) => {
                 <div class="info"><span class="label">L Number:</span> ${pkg.l_number}</div>
                 <div class="info"><span class="label">Mailbox:</span> ${pkg.mailbox}</div>
                 <div class="info"><span class="label">Tracking:</span> ${pkg.tracking_code}</div>
+                <div class="info"><span class="label">Carrier:</span> ${carrier.name}</div>
                 <div class="info" style="margin-top: 30px; border-top: 2px solid #000; padding-top: 10px;">
                     <p>Please bring your student ID to pick up your package.</p>
                 </div>
