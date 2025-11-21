@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNA Package Tracker - Login</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+    <!-- Updated to modern dark blue theme with tabbed interface -->
+    <div class="login-container">
+        <div class="background-effects">
+            <div class="effect-circle effect-1"></div>
+            <div class="effect-circle effect-2"></div>
+        </div>
+
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5">
+                    <div class="login-card">
+            <div class="logo-section mb-4">
+                <div class="logo-icon">📦</div>
+                <h1>UNA Package Tracker</h1>
+                <p class="subtitle">University of North Alabama Package Management System</p>
+            </div>
+
+            <div class="tabs mb-4">
+                <button class="tab-btn active" data-tab="student">Student/Staff</button>
+                <button class="tab-btn" data-tab="worker">Mailroom Worker</button>
+            </div>
+            
+            <!-- Student/Staff Login Form -->
+            <form id="studentLoginForm" class="login-form active">
+                <div class="mb-3">
+                    <label for="studentId" class="form-label">L Number</label>
+                    <input
+                        type="text"
+                        id="studentId"
+                        name="studentId"
+                        class="form-control"
+                        placeholder="L00123456"
+                        required
+                    >
+                </div>
+
+                <div class="mb-3">
+                    <label for="studentPassword" class="form-label">Password</label>
+                    <input
+                        type="password"
+                        id="studentPassword"
+                        name="studentPassword"
+                        class="form-control"
+                        placeholder="Enter your password"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                    <span class="btn-icon">🔐</span>
+                    Sign In
+                </button>
+            </form>
+            
+            <!-- Worker Login Form -->
+            <form id="workerLoginForm" class="login-form">
+                <div class="mb-3">
+                    <label for="workerEmail" class="form-label">Email</label>
+                    <input
+                        type="email"
+                        id="workerEmail"
+                        name="workerEmail"
+                        class="form-control"
+                        placeholder="worker@una.edu"
+                        required
+                    >
+                </div>
+
+                <div class="mb-3">
+                    <label for="workerPassword" class="form-label">Password</label>
+                    <input
+                        type="password"
+                        id="workerPassword"
+                        name="workerPassword"
+                        class="form-control"
+                        placeholder="Enter your password"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="btn btn-secondary w-100">
+                    <span class="btn-icon">🔐</span>
+                    Worker Sign In
+                </button>
+            </form>
+            
+            <div id="errorMessage" class="error-message mt-3"></div>
+
+            <div class="footer-info mt-4">
+                <p class="mb-1">University of North Alabama</p>
+                <p class="mb-0">Mailroom Package Management</p>
+            </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JavaScript Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <script src="scripts/api-client.js"></script>
+    <script src="scripts/login.js"></script>
+</body>
+</html>

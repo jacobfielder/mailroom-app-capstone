@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNA Package Tracker - My Packages</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <header class="dashboard-header">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between align-items-center py-3">
+                    <h1 class="mb-0">UNA Package Tracker</h1>
+                    <div class="d-flex align-items-center gap-3">
+                        <span id="studentName" class="user-name"></span>
+                        <button onclick="logout()" class="btn btn-secondary">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="container py-4">
+            <div class="welcome-section mb-4">
+                <h2>My Packages</h2>
+                <p class="welcome-text text-muted">View your packages ready for pickup</p>
+            </div>
+
+            <div class="mb-4">
+                <input
+                    type="text"
+                    id="studentSearch"
+                    class="form-control"
+                    placeholder="Search by tracking code..."
+                    oninput="filterStudentPackages()"
+                >
+            </div>
+
+            <div id="packagesContainer" class="row g-4">
+                <!-- Populated by JavaScript -->
+            </div>
+
+            <div id="noPackagesMessage" class="no-packages text-center py-5">
+                <span class="icon-large">📭</span>
+                <h3 class="mt-3">No Packages Available</h3>
+                <p class="text-muted">You don't have any packages ready for pickup at this time.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JavaScript Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <script src="scripts/api-client.js"></script>
+    <script src="scripts/student.js"></script>
+</body>
+</html>
