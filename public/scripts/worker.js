@@ -173,7 +173,37 @@ window.scanPackage = async (event) => {
   console.log('Carrier detected for package:', carrier)
 
   try {
-    // TODO: When backend supports it, pass carrier info: { trackingCode, recipientId, carrier }
+    // Validate USPS tracking number if it's a USPS package
+    if (carrier.code === 'usps') {
+      showScanMessage("Validating USPS tracking number...", "info")
+
+      try {
+        const validation = await window.apiClient.validateUSPSTracking(trackingCode)
+
+        if (validation.success) {
+          console.log('USPS tracking validated:', validation)
+          showScanMessage(
+            `USPS package validated: ${validation.service} - ${validation.status}`,
+            "success"
+          )
+
+          // Small delay to show validation message
+          await new Promise(resolve => setTimeout(resolve, 1000))
+        }
+      } catch (validationError) {
+        // If validation fails, show warning but allow user to proceed
+        console.warn('USPS validation failed:', validationError)
+        const proceed = confirm(
+          `USPS tracking validation failed: ${validationError.message}\n\nDo you want to check in this package anyway?`
+        )
+        if (!proceed) {
+          showScanMessage("Package check-in cancelled", "error")
+          return
+        }
+      }
+    }
+
+    // Check in the package
     const newPackage = await window.apiClient.checkInPackage(trackingCode, recipientId)
     const recipient = recipients.find((r) => r.id == recipientId)
 
@@ -199,7 +229,13 @@ window.scanPackage = async (event) => {
 
 function showScanMessage(message, type) {
   const messageDiv = document.getElementById("scanMessage")
-  const alertClass = type === "success" ? "alert-success" : "alert-danger"
+  let alertClass = "alert-danger"
+
+  if (type === "success") {
+    alertClass = "alert-success"
+  } else if (type === "info") {
+    alertClass = "alert-info"
+  }
 
   messageDiv.innerHTML = `
     <div class="alert ${alertClass} alert-dismissible fade show" role="alert">

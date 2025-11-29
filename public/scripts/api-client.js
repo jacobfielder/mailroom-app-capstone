@@ -117,6 +117,22 @@ class APIClient {
       method: "DELETE",
     })
   }
+
+  // USPS Tracking endpoints
+  async validateUSPSTracking(trackingNumber) {
+    return this.request("/api/tracking/usps/validate", {
+      method: "POST",
+      body: JSON.stringify({ trackingNumber }),
+    })
+  }
+
+  async checkUSPSFormat(trackingNumber) {
+    return this.request(`/api/tracking/usps/check-format/${encodeURIComponent(trackingNumber)}`)
+  }
+
+  async getUSPSStatus() {
+    return this.request("/api/tracking/usps/status")
+  }
 }
 
 // Create global API client instance

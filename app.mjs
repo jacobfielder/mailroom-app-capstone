@@ -5,6 +5,7 @@ import cors from 'cors';
 import nodemailer from 'nodemailer';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import uspsAPI from './services/usps-api.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -102,8 +103,34 @@ app.post('/api/packages', authenticateToken, authorizeWorker, async (req, res) =
   try {
     const { trackingCode, recipientId } = req.body;
 
+    // Validate tracking number with USPS API if configured and it's a USPS package
+    let trackingInfo = null;
+    if (uspsAPI.isConfigured() && uspsAPI.isUSPSTrackingNumber(trackingCode)) {
+      console.log(`Validating USPS tracking number: ${trackingCode}`);
+      trackingInfo = await uspsAPI.trackPackage(trackingCode);
+
+      if (!trackingInfo.success) {
+        return res.status(400).json({
+          error: 'Invalid USPS tracking number',
+          details: trackingInfo.error,
+          trackingCode
+        });
+      }
+
+      console.log(`USPS tracking validated: ${trackingInfo.status}`);
+    }
+
     // TODO: Implement package check-in with database
-    res.status(501).json({ error: 'Database not configured. Backend team needs to implement.' });
+    // When implementing database, save trackingInfo data:
+    // - trackingInfo.service (mail class/service type)
+    // - trackingInfo.status (current status)
+    // - trackingInfo.deliveryDate (expected delivery)
+
+    res.status(501).json({
+      error: 'Database not configured. Backend team needs to implement.',
+      trackingValidated: trackingInfo?.success || false,
+      trackingData: trackingInfo || null
+    });
   } catch (error) {
     console.error('Error checking in package:', error);
     res.status(500).json({ error: 'Failed to check in package' });
@@ -130,6 +157,77 @@ app.delete('/api/packages/:id', authenticateToken, authorizeWorker, async (req, 
     console.error('Error deleting package:', error);
     res.status(500).json({ error: 'Failed to delete package' });
   }
+});
+
+// ==================== USPS TRACKING ROUTES ====================
+
+// Validate and track a USPS package (worker only)
+app.post('/api/tracking/usps/validate', authenticateToken, authorizeWorker, async (req, res) => {
+  try {
+    const { trackingNumber } = req.body;
+
+    if (!trackingNumber) {
+      return res.status(400).json({ error: 'Tracking number is required' });
+    }
+
+    // Check if USPS API is configured
+    if (!uspsAPI.isConfigured()) {
+      return res.status(503).json({
+        error: 'USPS API not configured',
+        message: 'Please add USPS_CONSUMER_KEY and USPS_CONSUMER_SECRET to environment variables'
+      });
+    }
+
+    // Check if this is a USPS tracking number
+    if (!uspsAPI.isUSPSTrackingNumber(trackingNumber)) {
+      return res.status(400).json({
+        error: 'Invalid USPS tracking number format',
+        trackingNumber: trackingNumber
+      });
+    }
+
+    // Track the package
+    const trackingInfo = await uspsAPI.trackPackage(trackingNumber);
+
+    if (!trackingInfo.success) {
+      return res.status(404).json({
+        error: trackingInfo.error,
+        trackingNumber: trackingInfo.trackingNumber
+      });
+    }
+
+    res.json(trackingInfo);
+  } catch (error) {
+    console.error('Error validating USPS tracking:', error);
+    res.status(500).json({ error: 'Failed to validate tracking number' });
+  }
+});
+
+// Check if tracking number is USPS format (public endpoint for frontend validation)
+app.get('/api/tracking/usps/check-format/:trackingNumber', (req, res) => {
+  try {
+    const { trackingNumber } = req.params;
+    const isUSPS = uspsAPI.isUSPSTrackingNumber(trackingNumber);
+
+    res.json({
+      isUSPS,
+      trackingNumber,
+      carrier: isUSPS ? 'USPS' : 'Unknown'
+    });
+  } catch (error) {
+    console.error('Error checking tracking format:', error);
+    res.status(500).json({ error: 'Failed to check tracking format' });
+  }
+});
+
+// Get USPS API configuration status
+app.get('/api/tracking/usps/status', authenticateToken, authorizeWorker, (req, res) => {
+  res.json({
+    configured: uspsAPI.isConfigured(),
+    message: uspsAPI.isConfigured()
+      ? 'USPS API is configured and ready'
+      : 'USPS API credentials not configured'
+  });
 });
 
 // ==================== RECIPIENT ROUTES ====================
@@ -236,7 +334,7 @@ app.get('/student', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'student-dashboard.html'));
 });
 
-// ==================== START SERVER ====================
+// ==================== START SERVER (for local spinup only) ====================
 
 app.listen(PORT, () => {
   console.log(`UNA Package Tracker Server running on port ${PORT}`);
