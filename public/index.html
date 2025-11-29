@@ -28,19 +28,19 @@
 
             <div class="tabs mb-4">
                 <button class="tab-btn active" data-tab="student">Student/Staff</button>
-                <button class="tab-btn" data-tab="worker">Mailroom Worker</button>
+                <button class="tab-btn" data-tab="worker">Mailroom</button>
             </div>
             
             <!-- Student/Staff Login Form -->
             <form id="studentLoginForm" class="login-form active">
                 <div class="mb-3">
-                    <label for="studentId" class="form-label">L Number</label>
+                    <label for="studentId" class="form-label">Email</label>
                     <input
                         type="text"
                         id="studentId"
                         name="studentId"
                         class="form-control"
-                        placeholder="L00123456"
+                        placeholder="example@una.edu"
                         required
                     >
                 </div>
@@ -72,7 +72,7 @@
                         id="workerEmail"
                         name="workerEmail"
                         class="form-control"
-                        placeholder="worker@una.edu"
+                        placeholder="example@una.edu"
                         required
                     >
                 </div>
@@ -91,7 +91,7 @@
 
                 <button type="submit" class="btn btn-secondary w-100">
                     <span class="btn-icon">🔐</span>
-                    Worker Sign In
+                    Sign In
                 </button>
             </form>
             
