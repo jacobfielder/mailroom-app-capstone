@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
