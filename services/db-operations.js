@@ -1,9 +1,11 @@
 /**
  * Database Operations Module
  * Handles all CRUD operations for the UNA Package Tracker
+ * Uses MongoDB instead of PostgreSQL
  */
 
-import { query } from './database.js';
+import { ObjectId } from 'mongodb';
+import { getCollection } from './database.js';
 
 // ==================== USER OPERATIONS ====================
 
@@ -13,11 +15,8 @@ import { query } from './database.js';
  * @returns {Promise<Object|null>}
  */
 export async function getUserByUsername(username) {
-  const result = await query(
-    'SELECT * FROM users WHERE username = $1',
-    [username]
-  );
-  return result.rows[0] || null;
+  const users = await getCollection('users');
+  return await users.findOne({ username });
 }
 
 /**
@@ -26,11 +25,8 @@ export async function getUserByUsername(username) {
  * @returns {Promise<Object|null>}
  */
 export async function getUserByEmail(email) {
-  const result = await query(
-    'SELECT * FROM users WHERE email = $1',
-    [email]
-  );
-  return result.rows[0] || null;
+  const users = await getCollection('users');
+  return await users.findOne({ email });
 }
 
 /**
@@ -39,11 +35,8 @@ export async function getUserByEmail(email) {
  * @returns {Promise<Object|null>}
  */
 export async function getUserByLNumber(lNumber) {
-  const result = await query(
-    'SELECT * FROM users WHERE l_number = $1',
-    [lNumber]
-  );
-  return result.rows[0] || null;
+  const users = await getCollection('users');
+  return await users.findOne({ l_number: lNumber });
 }
 
 /**
@@ -54,14 +47,25 @@ export async function getUserByLNumber(lNumber) {
 export async function createUser(userData) {
   const { username, passwordHash, type, email, fullName, lNumber } = userData;
 
-  const result = await query(
-    `INSERT INTO users (username, password_hash, type, email, full_name, l_number)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     RETURNING *`,
-    [username, passwordHash, type, email, fullName, lNumber]
-  );
+  const users = await getCollection('users');
 
-  return result.rows[0];
+  const newUser = {
+    username,
+    password_hash: passwordHash,
+    type,
+    email: email || null,
+    full_name: fullName || null,
+    l_number: lNumber || null,
+    created_at: new Date(),
+    updated_at: new Date()
+  };
+
+  const result = await users.insertOne(newUser);
+
+  return {
+    id: result.insertedId,
+    ...newUser
+  };
 }
 
 // ==================== RECIPIENT OPERATIONS ====================
@@ -71,23 +75,20 @@ export async function createUser(userData) {
  * @returns {Promise<Array>}
  */
 export async function getAllRecipients() {
-  const result = await query(
-    'SELECT * FROM recipients ORDER BY name ASC'
-  );
-  return result.rows;
+  const recipients = await getCollection('recipients');
+  return await recipients.find({}).sort({ name: 1 }).toArray();
 }
 
 /**
  * Get recipient by ID
- * @param {number} id
+ * @param {string|number} id
  * @returns {Promise<Object|null>}
  */
 export async function getRecipientById(id) {
-  const result = await query(
-    'SELECT * FROM recipients WHERE id = $1',
-    [id]
-  );
-  return result.rows[0] || null;
+  const recipients = await getCollection('recipients');
+  // Handle both MongoDB ObjectId and numeric IDs
+  const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { id: parseInt(id) };
+  return await recipients.findOne(query);
 }
 
 /**
@@ -96,11 +97,8 @@ export async function getRecipientById(id) {
  * @returns {Promise<Object|null>}
  */
 export async function getRecipientByLNumber(lNumber) {
-  const result = await query(
-    'SELECT * FROM recipients WHERE l_number = $1',
-    [lNumber]
-  );
-  return result.rows[0] || null;
+  const recipients = await getCollection('recipients');
+  return await recipients.findOne({ l_number: lNumber });
 }
 
 /**
@@ -111,47 +109,69 @@ export async function getRecipientByLNumber(lNumber) {
 export async function createRecipient(recipientData) {
   const { name, lNumber, type, mailbox, email } = recipientData;
 
-  const result = await query(
-    `INSERT INTO recipients (name, l_number, type, mailbox, email)
-     VALUES ($1, $2, $3, $4, $5)
-     RETURNING *`,
-    [name, lNumber, type, mailbox, email]
-  );
+  const recipients = await getCollection('recipients');
 
-  return result.rows[0];
+  const newRecipient = {
+    name,
+    l_number: lNumber,
+    type,
+    mailbox,
+    email,
+    created_at: new Date(),
+    updated_at: new Date()
+  };
+
+  const result = await recipients.insertOne(newRecipient);
+
+  return {
+    id: result.insertedId,
+    ...newRecipient
+  };
 }
 
 /**
  * Update recipient
- * @param {number} id
+ * @param {string|number} id
  * @param {Object} recipientData
  * @returns {Promise<Object|null>}
  */
 export async function updateRecipient(id, recipientData) {
   const { name, lNumber, type, mailbox, email } = recipientData;
 
-  const result = await query(
-    `UPDATE recipients
-     SET name = $1, l_number = $2, type = $3, mailbox = $4, email = $5
-     WHERE id = $6
-     RETURNING *`,
-    [name, lNumber, type, mailbox, email, id]
+  const recipients = await getCollection('recipients');
+  const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { id: parseInt(id) };
+
+  const updateDoc = {
+    $set: {
+      name,
+      l_number: lNumber,
+      type,
+      mailbox,
+      email,
+      updated_at: new Date()
+    }
+  };
+
+  const result = await recipients.findOneAndUpdate(
+    query,
+    updateDoc,
+    { returnDocument: 'after' }
   );
 
-  return result.rows[0] || null;
+  return result.value;
 }
 
 /**
  * Delete recipient
- * @param {number} id
+ * @param {string|number} id
  * @returns {Promise<boolean>}
  */
 export async function deleteRecipient(id) {
-  const result = await query(
-    'DELETE FROM recipients WHERE id = $1',
-    [id]
-  );
-  return result.rowCount > 0;
+  const recipients = await getCollection('recipients');
+  const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { id: parseInt(id) };
+
+  const result = await recipients.deleteOne(query);
+  return result.deletedCount > 0;
 }
 
 // ==================== PACKAGE OPERATIONS ====================
@@ -161,11 +181,8 @@ export async function deleteRecipient(id) {
  * @returns {Promise<Array>}
  */
 export async function getAllPackages() {
-  const result = await query(
-    `SELECT * FROM packages
-     ORDER BY check_in_date DESC`
-  );
-  return result.rows;
+  const packages = await getCollection('packages');
+  return await packages.find({}).sort({ check_in_date: -1 }).toArray();
 }
 
 /**
@@ -174,26 +191,19 @@ export async function getAllPackages() {
  * @returns {Promise<Array>}
  */
 export async function getPackagesByLNumber(lNumber) {
-  const result = await query(
-    `SELECT * FROM packages
-     WHERE l_number = $1
-     ORDER BY check_in_date DESC`,
-    [lNumber]
-  );
-  return result.rows;
+  const packages = await getCollection('packages');
+  return await packages.find({ l_number: lNumber }).sort({ check_in_date: -1 }).toArray();
 }
 
 /**
  * Get package by ID
- * @param {number} id
+ * @param {string|number} id
  * @returns {Promise<Object|null>}
  */
 export async function getPackageById(id) {
-  const result = await query(
-    'SELECT * FROM packages WHERE id = $1',
-    [id]
-  );
-  return result.rows[0] || null;
+  const packages = await getCollection('packages');
+  const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { id: parseInt(id) };
+  return await packages.findOne(query);
 }
 
 /**
@@ -202,11 +212,8 @@ export async function getPackageById(id) {
  * @returns {Promise<Object|null>}
  */
 export async function getPackageByTrackingCode(trackingCode) {
-  const result = await query(
-    'SELECT * FROM packages WHERE tracking_code = $1',
-    [trackingCode]
-  );
-  return result.rows[0] || null;
+  const packages = await getCollection('packages');
+  return await packages.findOne({ tracking_code: trackingCode });
 }
 
 /**
@@ -229,119 +236,106 @@ export async function createPackage(packageData) {
     carrierData
   } = packageData;
 
-  const result = await query(
-    `INSERT INTO packages (
-      tracking_code, carrier, recipient_id, recipient_name,
-      l_number, mailbox, carrier_status, service_type,
-      expected_delivery, last_location, last_updated, carrier_data
-    )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), $11)
-    RETURNING *`,
-    [
-      trackingCode,
-      carrier,
-      recipientId,
-      recipientName,
-      lNumber,
-      mailbox,
-      carrierStatus,
-      serviceType,
-      expectedDelivery,
-      lastLocation,
-      JSON.stringify(carrierData || {})
-    ]
-  );
+  const packages = await getCollection('packages');
 
-  return result.rows[0];
+  const newPackage = {
+    tracking_code: trackingCode,
+    carrier,
+    status: 'Checked In',
+    recipient_id: recipientId,
+    recipient_name: recipientName,
+    l_number: lNumber,
+    mailbox,
+    carrier_status: carrierStatus || null,
+    service_type: serviceType || null,
+    expected_delivery: expectedDelivery || null,
+    last_location: lastLocation || null,
+    carrier_data: carrierData || {},
+    check_in_date: new Date(),
+    checkout_date: null,
+    last_updated: new Date(),
+    created_at: new Date()
+  };
+
+  const result = await packages.insertOne(newPackage);
+
+  return {
+    id: result.insertedId,
+    ...newPackage
+  };
 }
 
 /**
  * Update package
- * @param {number} id
+ * @param {string|number} id
  * @param {Object} packageData
  * @returns {Promise<Object|null>}
  */
 export async function updatePackage(id, packageData) {
-  const {
-    trackingCode,
-    carrier,
-    status,
-    recipientId,
-    recipientName,
-    lNumber,
-    mailbox,
-    carrierStatus,
-    serviceType,
-    expectedDelivery,
-    lastLocation,
-    carrierData
-  } = packageData;
+  const packages = await getCollection('packages');
+  const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { id: parseInt(id) };
 
-  const result = await query(
-    `UPDATE packages
-     SET tracking_code = COALESCE($1, tracking_code),
-         carrier = COALESCE($2, carrier),
-         status = COALESCE($3, status),
-         recipient_id = COALESCE($4, recipient_id),
-         recipient_name = COALESCE($5, recipient_name),
-         l_number = COALESCE($6, l_number),
-         mailbox = COALESCE($7, mailbox),
-         carrier_status = COALESCE($8, carrier_status),
-         service_type = COALESCE($9, service_type),
-         expected_delivery = COALESCE($10, expected_delivery),
-         last_location = COALESCE($11, last_location),
-         carrier_data = COALESCE($12, carrier_data),
-         last_updated = NOW()
-     WHERE id = $13
-     RETURNING *`,
-    [
-      trackingCode,
-      carrier,
-      status,
-      recipientId,
-      recipientName,
-      lNumber,
-      mailbox,
-      carrierStatus,
-      serviceType,
-      expectedDelivery,
-      lastLocation,
-      carrierData ? JSON.stringify(carrierData) : null,
-      id
-    ]
+  // Build update object with only provided fields
+  const updateFields = {};
+
+  if (packageData.trackingCode !== undefined) updateFields.tracking_code = packageData.trackingCode;
+  if (packageData.carrier !== undefined) updateFields.carrier = packageData.carrier;
+  if (packageData.status !== undefined) updateFields.status = packageData.status;
+  if (packageData.recipientId !== undefined) updateFields.recipient_id = packageData.recipientId;
+  if (packageData.recipientName !== undefined) updateFields.recipient_name = packageData.recipientName;
+  if (packageData.lNumber !== undefined) updateFields.l_number = packageData.lNumber;
+  if (packageData.mailbox !== undefined) updateFields.mailbox = packageData.mailbox;
+  if (packageData.carrierStatus !== undefined) updateFields.carrier_status = packageData.carrierStatus;
+  if (packageData.serviceType !== undefined) updateFields.service_type = packageData.serviceType;
+  if (packageData.expectedDelivery !== undefined) updateFields.expected_delivery = packageData.expectedDelivery;
+  if (packageData.lastLocation !== undefined) updateFields.last_location = packageData.lastLocation;
+  if (packageData.carrierData !== undefined) updateFields.carrier_data = packageData.carrierData;
+
+  updateFields.last_updated = new Date();
+
+  const result = await packages.findOneAndUpdate(
+    query,
+    { $set: updateFields },
+    { returnDocument: 'after' }
   );
 
-  return result.rows[0] || null;
+  return result.value;
 }
 
 /**
  * Check out package (mark as picked up)
- * @param {number} id
+ * @param {string|number} id
  * @returns {Promise<Object|null>}
  */
 export async function checkoutPackage(id) {
-  const result = await query(
-    `UPDATE packages
-     SET status = 'Picked Up', checkout_date = NOW()
-     WHERE id = $1
-     RETURNING *`,
-    [id]
+  const packages = await getCollection('packages');
+  const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { id: parseInt(id) };
+
+  const result = await packages.findOneAndUpdate(
+    query,
+    {
+      $set: {
+        status: 'Picked Up',
+        checkout_date: new Date()
+      }
+    },
+    { returnDocument: 'after' }
   );
 
-  return result.rows[0] || null;
+  return result.value;
 }
 
 /**
  * Delete package
- * @param {number} id
+ * @param {string|number} id
  * @returns {Promise<boolean>}
  */
 export async function deletePackage(id) {
-  const result = await query(
-    'DELETE FROM packages WHERE id = $1',
-    [id]
-  );
-  return result.rowCount > 0;
+  const packages = await getCollection('packages');
+  const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { id: parseInt(id) };
+
+  const result = await packages.deleteOne(query);
+  return result.deletedCount > 0;
 }
 
 /**
@@ -349,17 +343,41 @@ export async function deletePackage(id) {
  * @returns {Promise<Object>}
  */
 export async function getPackageStats() {
-  const result = await query(`
-    SELECT
-      COUNT(*) as total_packages,
-      COUNT(CASE WHEN status = 'Checked In' THEN 1 END) as checked_in,
-      COUNT(CASE WHEN status = 'Picked Up' THEN 1 END) as picked_up,
-      COUNT(DISTINCT carrier) as unique_carriers,
-      COUNT(DISTINCT l_number) as unique_recipients
-    FROM packages
-  `);
+  const packages = await getCollection('packages');
 
-  return result.rows[0];
+  const stats = await packages.aggregate([
+    {
+      $facet: {
+        total: [{ $count: 'count' }],
+        checkedIn: [
+          { $match: { status: 'Checked In' } },
+          { $count: 'count' }
+        ],
+        pickedUp: [
+          { $match: { status: 'Picked Up' } },
+          { $count: 'count' }
+        ],
+        carriers: [
+          { $group: { _id: '$carrier' } },
+          { $count: 'count' }
+        ],
+        recipients: [
+          { $group: { _id: '$l_number' } },
+          { $count: 'count' }
+        ]
+      }
+    }
+  ]).toArray();
+
+  const result = stats[0];
+
+  return {
+    total_packages: result.total[0]?.count || 0,
+    checked_in: result.checkedIn[0]?.count || 0,
+    picked_up: result.pickedUp[0]?.count || 0,
+    unique_carriers: result.carriers[0]?.count || 0,
+    unique_recipients: result.recipients[0]?.count || 0
+  };
 }
 
 // ==================== AUDIT LOG OPERATIONS ====================
@@ -372,14 +390,23 @@ export async function getPackageStats() {
 export async function logAuditEvent(auditData) {
   const { userId, action, entityType, entityId, details } = auditData;
 
-  const result = await query(
-    `INSERT INTO audit_log (user_id, action, entity_type, entity_id, details)
-     VALUES ($1, $2, $3, $4, $5)
-     RETURNING *`,
-    [userId, action, entityType, entityId, details]
-  );
+  const logs = await getCollection('logs');
 
-  return result.rows[0];
+  const logEntry = {
+    user_id: userId,
+    action,
+    entity_type: entityType,
+    entity_id: entityId,
+    details: details || null,
+    created_at: new Date()
+  };
+
+  const result = await logs.insertOne(logEntry);
+
+  return {
+    id: result.insertedId,
+    ...logEntry
+  };
 }
 
 /**
@@ -388,16 +415,42 @@ export async function logAuditEvent(auditData) {
  * @returns {Promise<Array>}
  */
 export async function getAuditLogs(limit = 100) {
-  const result = await query(
-    `SELECT al.*, u.username, u.type as user_type
-     FROM audit_log al
-     LEFT JOIN users u ON al.user_id = u.id
-     ORDER BY al.created_at DESC
-     LIMIT $1`,
-    [limit]
-  );
+  const logs = await getCollection('logs');
 
-  return result.rows;
+  // Aggregate with users collection to get user details
+  const result = await logs.aggregate([
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'user_id',
+        foreignField: '_id',
+        as: 'user'
+      }
+    },
+    {
+      $unwind: {
+        path: '$user',
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        user_id: 1,
+        action: 1,
+        entity_type: 1,
+        entity_id: 1,
+        details: 1,
+        created_at: 1,
+        username: '$user.username',
+        user_type: '$user.type'
+      }
+    },
+    { $sort: { created_at: -1 } },
+    { $limit: limit }
+  ]).toArray();
+
+  return result;
 }
 
 export default {

@@ -1,113 +1,134 @@
 /**
- * Test Database Connection Script
- * Run this to verify your PostgreSQL connection is working
+ * Test MongoDB Atlas Connection Script
+ * Run this to verify your MongoDB connection is working
  */
 
-import pg from 'pg';
-import dotenv from 'dotenv';
+import 'dotenv/config';
+import { MongoClient } from 'mongodb';
 
-// Load environment variables
-dotenv.config();
-
-const { Pool } = pg;
-
-// Create connection pool with environment variables
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-});
+const uri = process.env.MONGODB_URI;
 
 async function testConnection() {
-  console.log('Testing PostgreSQL Database Connection...\n');
+  console.log('Testing MongoDB Atlas Connection...\n');
+
+  if (!uri) {
+    console.error('❌ Error: MONGODB_URI not found in environment variables');
+    console.log('\nPlease set MONGODB_URI in your .env file:');
+    console.log('MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/mailroom?retryWrites=true&w=majority\n');
+    process.exit(1);
+  }
+
+  if (uri.includes('YOUR_USERNAME') || uri.includes('YOUR_PASSWORD')) {
+    console.error('❌ Error: MONGODB_URI contains placeholder values');
+    console.log('\nPlease update your .env file with your actual MongoDB Atlas credentials\n');
+    process.exit(1);
+  }
+
   console.log('Configuration:');
-  console.log(`  Host: ${process.env.DB_HOST}`);
-  console.log(`  Port: ${process.env.DB_PORT || 5432}`);
-  console.log(`  Database: ${process.env.DB_NAME}`);
-  console.log(`  User: ${process.env.DB_USER}`);
-  console.log(`  Password: ${process.env.DB_PASSWORD ? '***' + process.env.DB_PASSWORD.slice(-3) : 'NOT SET'}`);
+  // Parse URI to show safe info
+  try {
+    const url = new URL(uri);
+    console.log(`  Protocol: ${url.protocol}`);
+    console.log(`  Host: ${url.hostname}`);
+    console.log(`  Database: ${url.pathname.slice(1).split('?')[0] || 'default'}`);
+    console.log(`  Username: ${url.username || 'not set'}`);
+    console.log(`  Password: ${url.password ? '***' : 'not set'}`);
+  } catch (e) {
+    console.log('  URI format: Unable to parse (check format)');
+  }
   console.log('\n');
+
+  const client = new MongoClient(uri, {
+    serverSelectionTimeoutMS: 5000
+  });
 
   try {
     // Test basic connection
     console.log('1. Testing basic connection...');
-    const client = await pool.connect();
-    console.log('✓ Successfully connected to PostgreSQL!\n');
+    await client.connect();
+    console.log('✓ Successfully connected to MongoDB Atlas!\n');
+
+    const db = client.db();
 
     // Test database version
-    console.log('2. Checking PostgreSQL version...');
-    const versionResult = await client.query('SELECT version()');
-    console.log(`✓ PostgreSQL Version: ${versionResult.rows[0].version.split(',')[0]}\n`);
+    console.log('2. Checking MongoDB version...');
+    const buildInfo = await db.admin().serverInfo();
+    console.log(`✓ MongoDB Version: ${buildInfo.version}\n`);
 
-    // Check if tables exist
-    console.log('3. Checking for required tables...');
-    const tablesResult = await client.query(`
-      SELECT table_name
-      FROM information_schema.tables
-      WHERE table_schema = 'public'
-      ORDER BY table_name
-    `);
+    // Check database name
+    console.log('3. Checking database...');
+    console.log(`✓ Database name: ${db.databaseName}\n`);
 
-    if (tablesResult.rows.length === 0) {
-      console.log('⚠ No tables found in database.');
-      console.log('  Run the schema.sql file to create tables:');
-      console.log('  psql -h 127.0.0.1 -U app_user -d main -f schema.sql\n');
+    // List collections
+    console.log('4. Checking for collections...');
+    const collections = await db.listCollections().toArray();
+
+    if (collections.length === 0) {
+      console.log('⚠ No collections found in database.');
+      console.log('  Run the setup script to create collections and indexes:');
+      console.log('  node mongodb-setup.js\n');
     } else {
-      console.log('✓ Found the following tables:');
-      tablesResult.rows.forEach(row => {
-        console.log(`  - ${row.table_name}`);
+      console.log('✓ Found the following collections:');
+      collections.forEach(col => {
+        console.log(`  - ${col.name}`);
       });
       console.log('');
     }
 
-    // Check specific tables we need
-    const requiredTables = ['users', 'recipients', 'packages', 'audit_log'];
-    console.log('4. Verifying required tables...');
-    const existingTables = tablesResult.rows.map(row => row.table_name);
+    // Check required collections
+    const requiredCollections = ['users', 'recipients', 'packages', 'logs'];
+    console.log('5. Verifying required collections...');
+    const existingCollections = collections.map(col => col.name);
 
-    let allTablesExist = true;
-    for (const table of requiredTables) {
-      if (existingTables.includes(table)) {
-        console.log(`  ✓ ${table} table exists`);
+    let allCollectionsExist = true;
+    for (const collectionName of requiredCollections) {
+      if (existingCollections.includes(collectionName)) {
+        const collection = db.collection(collectionName);
+        const count = await collection.countDocuments();
+        console.log(`  ✓ ${collectionName} collection exists (${count} documents)`);
       } else {
-        console.log(`  ✗ ${table} table is MISSING`);
-        allTablesExist = false;
+        console.log(`  ✗ ${collectionName} collection is MISSING`);
+        allCollectionsExist = false;
       }
     }
     console.log('');
 
-    if (!allTablesExist) {
-      console.log('⚠ Some tables are missing. Please run schema.sql to create them.\n');
+    if (!allCollectionsExist) {
+      console.log('⚠ Some collections are missing. Please run mongodb-setup.js to create them.\n');
     }
 
-    // Test a simple query on users table if it exists
-    if (existingTables.includes('users')) {
-      console.log('5. Testing query on users table...');
-      const usersResult = await client.query('SELECT COUNT(*) as count FROM users');
-      console.log(`✓ Users table has ${usersResult.rows[0].count} record(s)\n`);
-    }
-
-    // Release the client back to the pool
-    client.release();
+    // Test a ping command
+    console.log('6. Testing database ping...');
+    const pingResult = await db.command({ ping: 1 });
+    console.log(`✓ Ping response: ${JSON.stringify(pingResult)}\n`);
 
     console.log('==============================================');
-    console.log('Database connection test completed successfully!');
+    console.log('✅ MongoDB connection test completed successfully!');
     console.log('==============================================\n');
 
-    await pool.end();
+    if (allCollectionsExist) {
+      console.log('Your database is ready to use!');
+      console.log('Start your application with: npm run dev\n');
+    } else {
+      console.log('Next step: Run setup script to create collections');
+      console.log('Command: node mongodb-setup.js\n');
+    }
+
+    await client.close();
     process.exit(0);
   } catch (error) {
     console.error('\n❌ Database connection failed!');
     console.error('Error:', error.message);
     console.error('\nTroubleshooting:');
-    console.error('1. Make sure PostgreSQL is running');
-    console.error('2. Verify your .env file has correct credentials');
-    console.error('3. Check that the database exists');
-    console.error('4. Ensure the database user has proper permissions\n');
+    console.error('1. Verify your MONGODB_URI in .env is correct');
+    console.error('2. Check MongoDB Atlas network access:');
+    console.error('   - Go to Network Access in Atlas dashboard');
+    console.error('   - Whitelist your IP address or allow access from anywhere (0.0.0.0/0)');
+    console.error('3. Verify database user credentials are correct');
+    console.error('4. Check if your cluster is running and not paused');
+    console.error('5. Make sure your connection string includes the database name\n');
 
-    await pool.end();
+    await client.close();
     process.exit(1);
   }
 }
