@@ -1,0 +1,30 @@
+name:  Deploy to GCP VM
+# Trigger this workflow on pushes to the specified branch
+on:
+  push:
+    branches:
+      - main 
+jobs:
+  deploy:
+    runs-on: ubuntu-latest # Run this job on the latest Ubuntu version
+
+    steps:
+      - name: Deploy to GCP VM via SSH
+        env:
+          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }} # Reference the private key stored in GitHub Secrets
+        run: |
+          echo "$PRIVATE_KEY" > private_key.pem # Write the private key to a file
+          chmod 600 private_key.pem # Set the appropriate permissions for the key file
+
+          # Establish an SSH connection and execute commands on the remote server
+          ssh -o StrictHostKeyChecking=no -i private_key.pem -tt root@136.113.147.241 <<EOF  
+            # Here Document, allows for multiple commands while connected to server 
+            cd <Repo_DIR> #go to repo  
+            npm ci
+            pm2 delete <app> #in case the website is currently running
+            git pull #update repo
+            pm2 start <app> #start the updated app
+            exit  
+          EOF
+
+          rm -f private_key.pem # Remove the private key file after use for security
