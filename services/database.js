@@ -1,4 +1,4 @@
-/ src/db.js
+// services/database.js
 const { Pool } = require("pg");
 require("dotenv").config();
 
