@@ -21,7 +21,6 @@ const JWT_SECRET = process.env.JWT_SECRET || 'una-package-tracker-secret-key';
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
 
 
 // Email configuration (using nodemailer)
@@ -647,6 +646,9 @@ app.post('/api/packages/:id/notify', authenticateToken, requireWorker, async (re
 });
 
 // ==================== SERVE FRONTEND ====================
+
+// Serve static files (CSS, JS, images) - AFTER API routes to avoid conflicts
+app.use(express.static('public'));
 
 // Serve HTML pages
 app.get('/', (req, res) => {

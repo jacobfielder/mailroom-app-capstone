@@ -1,0 +1,33 @@
+runtime: nodejs20
+
+env: standard
+
+instance_class: F1
+
+automatic_scaling:
+  min_instances: 0
+  max_instances: 10
+  target_cpu_utilization: 0.65
+
+env_variables:
+  NODE_ENV: 'production'
+
+handlers:
+  # API routes - serve from the Node.js app
+  - url: /api/.*
+    script: auto
+    secure: always
+
+  # Static files
+  - url: /styles
+    static_dir: public/styles
+    secure: always
+
+  - url: /scripts
+    static_dir: public/scripts
+    secure: always
+
+  # All other routes - serve from the Node.js app
+  - url: /.*
+    script: auto
+    secure: always
