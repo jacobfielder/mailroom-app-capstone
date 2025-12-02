@@ -285,24 +285,27 @@ app.post('/api/packages', authenticateToken, requireWorker, async (req, res) => 
     // Detect carrier from tracking code
     const carrier = uspsAPI.isUSPSTrackingNumber(trackingCode) ? 'USPS' : 'Other';
 
-    // Validate tracking number with USPS API if configured and it's a USPS package
+    // Optional: Try to validate tracking number with USPS API if configured and it's a USPS package
+    // Validation is non-blocking - package will be checked in regardless of validation result
     let trackingInfo = null;
     let carrierData = {};
 
     if (uspsAPI.isConfigured() && carrier === 'USPS') {
-      console.log(`Validating USPS tracking number: ${trackingCode}`);
-      trackingInfo = await uspsAPI.trackPackage(trackingCode);
+      console.log(`Attempting USPS tracking validation for: ${trackingCode}`);
+      try {
+        trackingInfo = await uspsAPI.trackPackage(trackingCode);
 
-      if (!trackingInfo.success) {
-        return res.status(400).json({
-          error: 'Invalid USPS tracking number',
-          details: trackingInfo.error,
-          trackingCode
-        });
+        if (trackingInfo.success) {
+          console.log(`USPS tracking validated successfully: ${trackingInfo.status}`);
+          carrierData = trackingInfo;
+        } else {
+          console.warn(`USPS validation failed, but continuing with check-in: ${trackingInfo.error}`);
+          // Continue with check-in anyway
+        }
+      } catch (error) {
+        console.warn(`USPS API error, but continuing with check-in:`, error.message);
+        // Continue with check-in anyway - USPS API issues won't block package intake
       }
-
-      console.log(`USPS tracking validated: ${trackingInfo.status}`);
-      carrierData = trackingInfo;
     }
 
     // Create package in database

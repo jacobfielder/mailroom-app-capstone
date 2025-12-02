@@ -181,10 +181,9 @@ window.scanPackage = async (event) => {
   console.log('Carrier detected for package:', carrier)
 
   try {
-    // Validate USPS tracking number if it's a USPS package
+    // Optional: Try to validate USPS tracking number if it's a USPS package
+    // This is non-blocking - package will be checked in regardless
     if (carrier.code === 'usps') {
-      showScanMessage("Validating USPS tracking number...", "info")
-
       try {
         const validation = await window.apiClient.validateUSPSTracking(trackingCode)
 
@@ -199,15 +198,9 @@ window.scanPackage = async (event) => {
           await new Promise(resolve => setTimeout(resolve, 1000))
         }
       } catch (validationError) {
-        // If validation fails, show warning but allow user to proceed
-        console.warn('USPS validation failed:', validationError)
-        const proceed = confirm(
-          `USPS tracking validation failed: ${validationError.message}\n\nDo you want to check in this package anyway?`
-        )
-        if (!proceed) {
-          showScanMessage("Package check-in cancelled", "error")
-          return
-        }
+        // If USPS validation fails, just log it and continue with check-in
+        console.warn('USPS validation unavailable (continuing with check-in):', validationError.message)
+        // Don't show error to user - just proceed with check-in
       }
     }
 
