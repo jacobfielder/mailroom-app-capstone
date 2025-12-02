@@ -57,6 +57,7 @@ function displayPackages(packagesToDisplay) {
     const carrier = detectCarrier(pkg.tracking_code)
     const carrierBadgeHTML = getCarrierBadgeHTML(carrier.name, carrier.color, carrier.logoUrl)
 
+    const packageId = pkg._id || pkg.id
     const row = document.createElement("tr")
     row.innerHTML = `
             <td>${formatDate(pkg.check_in_date)}</td>
@@ -71,15 +72,15 @@ function displayPackages(packagesToDisplay) {
                     ${
                       pkg.status === "Checked In"
                         ? `
-                        <button class="btn btn-success btn-sm" onclick="checkoutPackage(${pkg.id})">Check Out</button>
-                        <button class="btn btn-warning btn-sm" onclick="printSlip(${pkg.id})">Print Slip</button>
-                        <button class="btn btn-primary btn-sm" onclick="emailRecipient(${pkg.id})">Email</button>
+                        <button class="btn btn-success btn-sm" onclick="checkoutPackage('${packageId}')">Check Out</button>
+                        <button class="btn btn-warning btn-sm" onclick="printSlip('${packageId}')">Print Slip</button>
+                        <button class="btn btn-primary btn-sm" onclick="emailRecipient('${packageId}')">Email</button>
                     `
                         : `
                         <span class="text-success fw-bold">Picked Up</span>
                     `
                     }
-                    <button class="btn btn-danger btn-sm" onclick="deletePackage(${pkg.id})">Delete</button>
+                    <button class="btn btn-danger btn-sm" onclick="deletePackage('${packageId}')">Delete</button>
                 </div>
             </td>
         `
@@ -98,6 +99,7 @@ function displayRecipients(recipientsToDisplay) {
 
   recipientsToDisplay.forEach((recipient) => {
     const row = document.createElement("tr")
+    const recipientId = recipient._id || recipient.id
     row.innerHTML = `
             <td>${recipient.name}</td>
             <td>${recipient.l_number}</td>
@@ -105,7 +107,7 @@ function displayRecipients(recipientsToDisplay) {
             <td>${recipient.mailbox}</td>
             <td>${recipient.email}</td>
             <td>
-                <button class="btn btn-danger btn-sm" onclick="deleteRecipient(${recipient.id})">Remove</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteRecipient('${recipientId}')">Remove</button>
             </td>
         `
     tbody.appendChild(row)
@@ -211,7 +213,7 @@ window.scanPackage = async (event) => {
 
     // Check in the package
     const newPackage = await window.apiClient.checkInPackage(trackingCode, recipientId)
-    const recipient = recipients.find((r) => r.id == recipientId)
+    const recipient = recipients.find((r) => (r._id || r.id) == recipientId)
 
     showScanMessage(`${carrier.name} package checked in for ${recipient.name}!`, "success")
 
@@ -276,7 +278,7 @@ window.deletePackage = async (packageId) => {
 }
 
 window.printSlip = (packageId) => {
-  const pkg = packages.find((p) => p.id === packageId)
+  const pkg = packages.find((p) => (p._id || p.id) == packageId)
   if (!pkg) return
 
   // Detect carrier
@@ -318,7 +320,7 @@ window.printSlip = (packageId) => {
 window.emailRecipient = async (packageId) => {
   try {
     await window.apiClient.sendNotification(packageId)
-    const pkg = packages.find((p) => p.id === packageId)
+    const pkg = packages.find((p) => (p._id || p.id) == packageId)
     showScanMessage(`Email notification sent to ${pkg.recipient_name}`, "success")
   } catch (error) {
     showScanMessage(error.message || "Failed to send email", "error")
@@ -380,7 +382,8 @@ function populateRecipientSelect() {
 
   recipients.forEach((recipient) => {
     const option = document.createElement("option")
-    option.value = recipient.id
+    // Use _id from MongoDB document
+    option.value = recipient._id || recipient.id
     option.textContent = `${recipient.name} (${recipient.l_number}) - Mailbox ${recipient.mailbox}`
     select.appendChild(option)
   })
