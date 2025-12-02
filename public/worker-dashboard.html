@@ -13,7 +13,10 @@
         <header class="dashboard-header">
             <div class="container-fluid">
                 <div class="d-flex justify-content-between align-items-center py-3">
-                    <h1 class="mb-0">UNA Package Tracker</h1>
+                    <div class="d-flex align-items-center">
+                        <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+                        <h1 class="mb-0">UNA Package Tracker</h1>
+                    </div>
                     <div class="d-flex align-items-center gap-3">
                         <span id="workerName" class="user-name"></span>
                         <button onclick="logout()" class="btn btn-secondary">Logout</button>
@@ -22,17 +25,20 @@
             </div>
         </header>
 
+        <!-- Mobile Menu Overlay -->
+        <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+
         <div class="container-fluid">
             <div class="row">
-                <nav class="col-12 col-md-3 col-lg-2 sidebar p-0">
+                <nav class="col-12 col-md-3 col-lg-2 sidebar p-0" id="sidebar">
                     <div class="d-flex flex-column p-3">
-                        <button class="nav-btn active mb-2" onclick="showSection('packages')">
+                        <button class="nav-btn active mb-2" onclick="showSection('packages'); closeMobileMenu();">
                             <span class="icon">📦</span> Packages
                         </button>
-                        <button class="nav-btn mb-2 recipients-section" onclick="showSection('recipients')" data-permission="recipients:read">
+                        <button class="nav-btn mb-2 recipients-section" onclick="showSection('recipients'); closeMobileMenu();" data-permission="recipients:read">
                             <span class="icon">👥</span> Recipients
                         </button>
-                        <button class="nav-btn scan-section" onclick="showSection('scan')" data-permission="packages:create">
+                        <button class="nav-btn scan-section" onclick="showSection('scan'); closeMobileMenu();" data-permission="packages:create">
                             <span class="icon">📷</span> Scan Package
                         </button>
                     </div>
