@@ -403,3 +403,28 @@ window.logout = () => {
   // Redirect to login page
   window.location.href = "/index.html"
 }
+
+// Mobile menu toggle functions
+window.toggleMobileMenu = () => {
+  const sidebar = document.getElementById("sidebar")
+  const overlay = document.getElementById("mobileOverlay")
+
+  sidebar.classList.toggle("mobile-open")
+  overlay.classList.toggle("active")
+
+  // Prevent body scrolling when menu is open
+  if (sidebar.classList.contains("mobile-open")) {
+    document.body.style.overflow = "hidden"
+  } else {
+    document.body.style.overflow = ""
+  }
+}
+
+window.closeMobileMenu = () => {
+  const sidebar = document.getElementById("sidebar")
+  const overlay = document.getElementById("mobileOverlay")
+
+  sidebar.classList.remove("mobile-open")
+  overlay.classList.remove("active")
+  document.body.style.overflow = ""
+}
